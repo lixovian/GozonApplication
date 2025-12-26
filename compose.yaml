@@ -1,0 +1,13 @@
+﻿services:
+  ordersservice.host:
+    image: ordersservice.host
+    build:
+      context: .
+      dockerfile: src/OrdersService/OrdersService.Host/Dockerfile
+
+  paymentsservice.host:
+    image: paymentsservice.host
+    build:
+      context: .
+      dockerfile: src/PaymentsService/PaymentsService.Host/Dockerfile
+
