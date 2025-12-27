@@ -38,14 +38,15 @@ public static class OrdersEndpoints
 
     private static RouteGroupBuilder MapListOrders(this RouteGroupBuilder group)
     {
-        group.MapGet("", (int userId, IListOrdersRequestHandler handler) =>
-            {
-                var response = handler.Handle(userId);
-                return Results.Ok(response);
-            })
+        group.MapGet("",
+                (int userId, IListOrdersRequestHandler handler, CancellationToken ct) =>
+                {
+                    var response = handler.Handle(userId);
+                    return Results.Ok(response);
+                })
             .WithName("ListOrders")
             .WithSummary("List orders")
-            .WithDescription("Returns all orders for specified user")
+            .WithDescription("Returns all orders for specified user.")
             .WithOpenApi();
 
         return group;
@@ -55,7 +56,7 @@ public static class OrdersEndpoints
     private static RouteGroupBuilder MapGetOrderStatus(this RouteGroupBuilder group)
     {
         group.MapGet("{orderId:guid}/status",
-                ([FromRoute] Guid orderId, [FromQuery] int userId, IGetOrderStatusRequestHandler handler) =>
+                (Guid orderId, int userId, IGetOrderStatusRequestHandler handler) =>
                 {
                     var response = handler.Handle(new GetOrderStatusRequest(userId, orderId));
                     return response is null ? Results.NotFound() : Results.Ok(response);

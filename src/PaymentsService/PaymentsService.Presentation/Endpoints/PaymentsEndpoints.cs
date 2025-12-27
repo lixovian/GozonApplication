@@ -62,18 +62,17 @@ public static class PaymentsEndpoints
 
         private RouteGroupBuilder MapGetBalance()
         {
-            builder.MapGet(
-                    pattern: "accounts/balance",
-                    (int userId, IGetBalanceRequestHandler handler) =>
+            builder.MapGet("/balance",
+                    (int userId, IGetBalanceRequestHandler handler, CancellationToken ct) =>
                     {
-                        var request = new GetBalanceRequest(userId);
-                        var response = handler.Handle(request);
+                        var response = handler.Handle(new GetBalanceRequest(userId));
                         return Results.Ok(response);
                     })
                 .WithName("GetBalance")
                 .WithSummary("Get account balance")
-                .WithDescription("Returns current balance of user's payment account");
-
+                .WithDescription("Returns current balance of user's payment account.")
+                .WithOpenApi();
+            
             return builder;
         }
     }
