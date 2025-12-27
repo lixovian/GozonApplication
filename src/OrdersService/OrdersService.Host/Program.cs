@@ -7,6 +7,19 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi("api", options =>
 {
+    options.AddDocumentTransformer((document, context, cancellationToken) =>
+    {
+        document.Servers =
+        [
+            new OpenApiServer
+            {
+                Url = "/orders"
+            }
+        ];
+       
+        return Task.CompletedTask;
+    });
+    
     options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_0;
 });
 

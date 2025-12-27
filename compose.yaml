@@ -152,7 +152,7 @@
 
   web-interface:
     build:
-      context: ./web-interface
+      context: ./src/WebInterfaceService
     ports:
       - "3000:80"
     depends_on:

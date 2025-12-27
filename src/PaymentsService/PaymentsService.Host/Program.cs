@@ -7,6 +7,19 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi("api", options =>
 {
+    options.AddDocumentTransformer((document, context, cancellationToken) =>
+    {
+        document.Servers =
+        [
+            new OpenApiServer
+            {
+                Url = "/payments"
+            }
+        ];
+
+        return Task.CompletedTask;
+    });
+    
     options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_0;
 });
 
@@ -28,6 +41,7 @@ if (app.Environment.IsDevelopment())
         options.SwaggerEndpoint("/openapi/api.json", "Payments API");
     });
 }
+
 
 app.UseHttpsRedirection();
 
