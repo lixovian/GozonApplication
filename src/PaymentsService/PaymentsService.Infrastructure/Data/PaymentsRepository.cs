@@ -84,13 +84,13 @@ internal sealed class PaymentsRepository(AppDbContext dbContext) :
         var sumTopUp = dbContext.AccountTransactions
             .Where(t => t.AccountId == accountId && t.Type == "TOPUP")
             .Select(t => t.Amount)
-            .DefaultIfEmpty(0m)
+            .DefaultIfEmpty(0)
             .Sum();
 
         var sumDebit = dbContext.AccountTransactions
             .Where(t => t.AccountId == accountId && t.Type == "DEBIT")
             .Select(t => t.Amount)
-            .DefaultIfEmpty(0m)
+            .DefaultIfEmpty(0)
             .Sum();
 
         return sumTopUp - sumDebit;
