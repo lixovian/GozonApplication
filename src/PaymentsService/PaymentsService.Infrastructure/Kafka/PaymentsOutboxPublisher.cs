@@ -13,9 +13,9 @@ namespace PaymentsService.Infrastructure.Kafka;
 
 internal sealed class PaymentsOutboxPublisher(
     IServiceScopeFactory scopeFactory,
-    IProducer<Null, PaymentResultDto> producer,
     IOptions<PaymentsProducerOptions> options,
-    ILogger<PaymentsOutboxPublisher> logger) : BackgroundService
+    ILogger<PaymentsOutboxPublisher> logger)
+    : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -26,7 +26,13 @@ internal sealed class PaymentsOutboxPublisher(
                 await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
 
                 using var scope = scopeFactory.CreateScope();
-                var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+                var dbContext =
+                    scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+                var producer =
+                    scope.ServiceProvider
+                         .GetRequiredService<IProducer<Null, PaymentResultDto>>();
 
                 var batch = await dbContext.Outbox
                     .Where(x => x.SentAt == null)
@@ -36,7 +42,10 @@ internal sealed class PaymentsOutboxPublisher(
 
                 foreach (var msg in batch)
                 {
-                    var response = System.Text.Json.JsonSerializer.Deserialize<ProcessPaymentResponse>(msg.Payload);
+                    var response =
+                        System.Text.Json.JsonSerializer
+                            .Deserialize<ProcessPaymentResponse>(msg.Payload);
+
                     if (response is null)
                         continue;
 
@@ -50,14 +59,23 @@ internal sealed class PaymentsOutboxPublisher(
 
                     await producer.ProduceAsync(
                         options.Value.Topic,
-                        new Message<Null, PaymentResultDto> { Value = dto },
+                        new Message<Null, PaymentResultDto>
+                        {
+                            Value = dto
+                        },
                         stoppingToken);
 
                     msg.SentAt = DateTimeOffset.UtcNow;
                 }
 
                 if (batch.Count > 0)
+                {
                     await dbContext.SaveChangesAsync(stoppingToken);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // graceful shutdown
             }
             catch (Exception ex)
             {

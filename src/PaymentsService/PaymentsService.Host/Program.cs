@@ -4,6 +4,8 @@ using PaymentsService.UseCases;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddSingleton(TimeProvider.System); 
+
 builder.Services.AddOpenApi(documentName: "api");
 
 builder.Services.AddUseCases();

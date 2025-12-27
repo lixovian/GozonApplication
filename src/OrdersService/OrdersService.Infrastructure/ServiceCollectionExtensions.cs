@@ -20,36 +20,46 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services)
     {
-        // --- DB ---
         services.AddDbContext<OrdersDbContext>((serviceProvider, options) =>
         {
             var configuration = serviceProvider.GetRequiredService<IConfiguration>();
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"));
         });
 
-        // --- Repositories (Orders) ---
         services.AddScoped<IAddOrderRepository, AddOrderRepository>();
         services.AddScoped<IListOrdersRepository, ListOrdersRepository>();
         services.AddScoped<IGetOrderStatusRepository, GetOrderStatusRepository>();
 
-        // Transactional Inbox (payment results -> orders)
         services.AddScoped<IApplyPaymentResultRepository, ApplyPaymentResultRepository>();
 
-        // --- Hosted services ---
         services.AddHostedService<MigrationRunner>();
 
-        // === Outbox Publisher -> Kafka producer (PaymentRequested) ===
         services.AddOptions<OrdersProducerOptions>()
             .BindConfiguration("OrdersProducer")
             .ValidateOnStart();
 
         services.AddScoped<IProducer<Null, PaymentRequestedDto>>(sp =>
         {
-            var opts = sp.GetRequiredService<IOptions<OrdersProducerOptions>>();
+            var options = sp.GetRequiredService<IOptions<OrdersProducerOptions>>();
 
             var config = new ProducerConfig
             {
-                BootstrapServers = opts.Value.BootstrapServers
+                BootstrapServers = options.Value.BootstrapServers
+            };
+
+            return new ProducerBuilder<Null, PaymentRequestedDto>(config)
+                .SetValueSerializer(new JsonValueSerializer<PaymentRequestedDto>())
+                .Build();
+        });
+
+        services.AddHostedService<OutboxPublisherBackgroundService>();
+        services.AddScoped<IProducer<Null, PaymentRequestedDto>>(sp =>
+        {
+            var options = sp.GetRequiredService<IOptions<OrdersProducerOptions>>();
+
+            var config = new ProducerConfig
+            {
+                BootstrapServers = options.Value.BootstrapServers
             };
 
             return new ProducerBuilder<Null, PaymentRequestedDto>(config)
@@ -59,7 +69,6 @@ public static class ServiceCollectionExtensions
 
         services.AddHostedService<OutboxPublisherBackgroundService>();
 
-        // === Payments Results Consumer (manual commit) ===
         services.AddOptions<OrdersPaymentsResultsConsumerOptions>()
             .BindConfiguration("PaymentsResultsConsumer")
             .ValidateOnStart();
@@ -73,7 +82,7 @@ public static class ServiceCollectionExtensions
                 BootstrapServers = opts.Value.BootstrapServers,
                 GroupId = opts.Value.GroupId,
                 AutoOffsetReset = AutoOffsetReset.Earliest,
-                EnableAutoCommit = false // как в занятии (commit только после обработки)
+                EnableAutoCommit = false
             };
 
             return new ConsumerBuilder<Ignore, PaymentResultDto?>(config)

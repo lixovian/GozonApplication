@@ -11,9 +11,9 @@ namespace OrdersService.Infrastructure.Jobs;
 
 internal sealed class OutboxPublisherBackgroundService(
     IServiceScopeFactory scopeFactory,
-    IProducer<Null, PaymentRequestedDto> producer,
     IOptions<OrdersProducerOptions> options,
-    ILogger<OutboxPublisherBackgroundService> logger) : BackgroundService
+    ILogger<OutboxPublisherBackgroundService> logger)
+    : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -24,7 +24,13 @@ internal sealed class OutboxPublisherBackgroundService(
                 await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
 
                 using var scope = scopeFactory.CreateScope();
-                var dbContext = scope.ServiceProvider.GetRequiredService<OrdersDbContext>();
+
+                var dbContext =
+                    scope.ServiceProvider.GetRequiredService<OrdersDbContext>();
+
+                var producer =
+                    scope.ServiceProvider
+                         .GetRequiredService<IProducer<Null, PaymentRequestedDto>>();
 
                 var batch = await dbContext.Outbox
                     .Where(x => x.SentAt == null && x.Type == "PaymentRequested")
@@ -34,22 +40,39 @@ internal sealed class OutboxPublisherBackgroundService(
 
                 foreach (var msg in batch)
                 {
-                    var dto = System.Text.Json.JsonSerializer.Deserialize<UseCases.Orders.AddOrder.PaymentRequestedOutboxMessage>(msg.Payload);
+                    var dto =
+                        System.Text.Json.JsonSerializer.Deserialize<
+                            UseCases.Orders.AddOrder.PaymentRequestedOutboxMessage>(msg.Payload);
+
                     if (dto is null)
                         continue;
 
-                    var brokerDto = new PaymentRequestedDto(dto.OrderId, dto.UserId, dto.Amount, dto.Description, dto.Key);
+                    var brokerDto = new PaymentRequestedDto(
+                        dto.OrderId,
+                        dto.UserId,
+                        dto.Amount,
+                        dto.Description,
+                        dto.Key);
 
                     await producer.ProduceAsync(
                         options.Value.Topic,
-                        new Message<Null, PaymentRequestedDto> { Value = brokerDto },
+                        new Message<Null, PaymentRequestedDto>
+                        {
+                            Value = brokerDto
+                        },
                         stoppingToken);
 
                     msg.SentAt = DateTimeOffset.UtcNow;
                 }
 
                 if (batch.Count > 0)
+                {
                     await dbContext.SaveChangesAsync(stoppingToken);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // graceful shutdown
             }
             catch (Exception ex)
             {

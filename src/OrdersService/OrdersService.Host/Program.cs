@@ -4,6 +4,8 @@ using OrdersService.UseCases;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddSingleton(TimeProvider.System); 
+
 // OpenAPI
 builder.Services.AddOpenApi("api");
 
