@@ -9,12 +9,21 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.1"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.1" />
+        <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.1.0" />
     </ItemGroup>
 
     <ItemGroup>
       <Content Include="..\..\..\.dockerignore">
         <Link>.dockerignore</Link>
       </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\OrdersService.Entities\OrdersService.Entities.csproj" />
+      <ProjectReference Include="..\OrdersService.Infrastructure\OrdersService.Infrastructure.csproj" />
+      <ProjectReference Include="..\OrdersService.Presentation\OrdersService.Presentation.csproj" />
+      <ProjectReference Include="..\OrdersService.UseCases\OrdersService.UseCases.csproj" />
     </ItemGroup>
 
 </Project>

@@ -1,13 +1,188 @@
 ﻿services:
-  ordersservice.host:
-    image: ordersservice.host
+  # -------------------------
+  # Databases
+  # -------------------------
+  orders-db:
+    image: postgres:16
+    ports:
+      - "8432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - orders_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  payments-db:
+    image: postgres:16
+    ports:
+      - "9432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - payments_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # -------------------------
+  # Kafka / Zookeeper
+  # -------------------------
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 2181 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    ports:
+      - "9092:9092"   # для доступа с хоста
+    expose:
+      - "29092"       # для доступа из docker-сети (bootstrap)
+      - "9093"        # внутренний listener (service)
+    environment:
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+
+      # 3 listener'а: для docker-сети, для localhost, и для service
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CLIENT:PLAINTEXT,LOCALHOST:PLAINTEXT,SERVICE:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: CLIENT
+      KAFKA_LISTENERS: CLIENT://0.0.0.0:29092,LOCALHOST://0.0.0.0:9092,SERVICE://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: CLIENT://kafka:29092,LOCALHOST://localhost:9092,SERVICE://kafka:9093
+
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server kafka:29092 --list >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  kafka-init:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: ["sh", "-c"]
+    command: |
+      "
+      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic payments-requests --partitions 1 --replication-factor 1
+      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic payments-results --partitions 1 --replication-factor 1
+      "
+
+  kafka-ui:
+    image: kafbat/kafka-ui:latest
+    ports:
+      - "4999:8080"
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_CLUSTERS_0_NAME: "local"
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: "kafka:29092"
+
+  # -------------------------
+  # Services
+  # -------------------------
+  orders-service:
     build:
       context: .
       dockerfile: src/OrdersService/OrdersService.Host/Dockerfile
+    ports:
+      - "6001:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
 
-  paymentsservice.host:
-    image: paymentsservice.host
+      # DB
+      ConnectionStrings__DefaultConnection: Server=orders-db:5432;Database=postgres;User Id=postgres;Password=postgres;
+
+      # Outbox publisher -> payments-requests
+      OrdersProducer__Topic: payments-requests
+      OrdersProducer__BootstrapServers: kafka:9093
+
+      # Consumer <- payments-results
+      PaymentsResultsConsumer__Topic: payments-results
+      PaymentsResultsConsumer__BootstrapServers: kafka:9093
+      PaymentsResultsConsumer__GroupId: orders-service
+    depends_on:
+      orders-db:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+
+  payments-service:
     build:
       context: .
       dockerfile: src/PaymentsService/PaymentsService.Host/Dockerfile
+    ports:
+      - "6002:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
 
+      # DB
+      ConnectionStrings__Default: Server=payments-db:5432;Database=postgres;User Id=postgres;Password=postgres;
+
+      # Consumer <- payments-requests
+      PaymentsConsumer__Topic: payments-requests
+      PaymentsConsumer__BootstrapServers: kafka:9093
+      PaymentsConsumer__GroupId: payments-service
+
+      # Outbox publisher -> payments-results
+      PaymentsProducer__Topic: payments-results
+      PaymentsProducer__BootstrapServers: kafka:9093
+    depends_on:
+      payments-db:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "9000:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      orders-service:
+        condition: service_started
+      payments-service:
+        condition: service_started
+
+  scalar:
+    image: scalarapi/api-reference:latest
+    depends_on:
+      nginx:
+        condition: service_started
+    ports:
+      - "9010:8080"
+    environment:
+      API_REFERENCE_CONFIG: |
+        {
+          "theme": "purple",
+          "sources": [
+            { "url": "http://nginx/orders/openapi/api.json", "title": "Orders API" },
+            { "url": "http://nginx/payments/openapi/api.json", "title": "Payments API" }
+          ]
+        }
+
+volumes:
+  orders_db_data:
+  payments_db_data:
