@@ -38,7 +38,7 @@ internal sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbC
             builder.Property(x => x.CreatedAt).HasColumnName("created_at").IsRequired();
             builder.Property(x => x.Key).HasColumnName("key").IsRequired();
 
-            builder.HasIndex(x => x.Key).IsUnique(); // idempotency for any money movement
+            builder.HasIndex(x => x.Key).IsUnique();
             builder.HasIndex(x => x.AccountId);
         });
 
@@ -48,7 +48,7 @@ internal sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbC
             builder.HasKey(x => x.Id);
 
             builder.Property(x => x.Id).HasColumnName("id").ValueGeneratedNever();
-            builder.Property(x => x.Type).HasColumnName("type").IsRequired();      // PaymentRequested
+            builder.Property(x => x.Type).HasColumnName("type").IsRequired();  
             builder.Property(x => x.Key).HasColumnName("key").IsRequired();
             builder.Property(x => x.Payload).HasColumnName("payload").IsRequired();
             builder.Property(x => x.ReceivedAt).HasColumnName("received_at").IsRequired();
@@ -62,7 +62,7 @@ internal sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbC
             builder.HasKey(x => x.Id);
 
             builder.Property(x => x.Id).HasColumnName("id").ValueGeneratedNever();
-            builder.Property(x => x.Type).HasColumnName("type").IsRequired();      // PaymentSucceeded/PaymentFailed
+            builder.Property(x => x.Type).HasColumnName("type").IsRequired(); 
             builder.Property(x => x.Key).HasColumnName("key").IsRequired();
             builder.Property(x => x.Payload).HasColumnName("payload").IsRequired();
             builder.Property(x => x.CreatedAt).HasColumnName("created_at").IsRequired();

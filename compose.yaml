@@ -1,7 +1,4 @@
 ﻿services:
-  # -------------------------
-  # Databases
-  # -------------------------
   orders-db:
     image: postgres:16-bookworm
     ports:
@@ -34,9 +31,6 @@
       timeout: 5s
       retries: 5
 
-  # -------------------------
-  # Kafka / Zookeeper
-  # -------------------------
   zookeeper:
     image: confluentinc/cp-zookeeper:7.6.0
     ports:
@@ -52,15 +46,14 @@
   kafka:
     image: confluentinc/cp-kafka:7.6.0
     ports:
-      - "9092:9092"   # для доступа с хоста
+      - "9092:9092" 
     expose:
-      - "29092"       # для доступа из docker-сети (bootstrap)
-      - "9093"        # внутренний listener (service)
+      - "29092" 
+      - "9093"
     environment:
       ALLOW_PLAINTEXT_LISTENER: "yes"
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
 
-      # 3 listener'а: для docker-сети, для localhost, и для service
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CLIENT:PLAINTEXT,LOCALHOST:PLAINTEXT,SERVICE:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: CLIENT
       KAFKA_LISTENERS: CLIENT://0.0.0.0:29092,LOCALHOST://0.0.0.0:9092,SERVICE://0.0.0.0:9093
@@ -99,9 +92,6 @@
       KAFKA_CLUSTERS_0_NAME: "local"
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: "kafka:29092"
 
-  # -------------------------
-  # Services
-  # -------------------------
   orders-service:
     build:
       context: .
@@ -111,14 +101,11 @@
     environment:
       ASPNETCORE_ENVIRONMENT: Development
 
-      # DB
       ConnectionStrings__DefaultConnection: Server=orders-db:5432;Database=postgres;User Id=postgres;Password=postgres;
 
-      # Outbox publisher -> payments-requests
       OrdersProducer__Topic: payments-requests
       OrdersProducer__BootstrapServers: kafka:9093
 
-      # Consumer <- payments-results
       PaymentsResultsConsumer__Topic: payments-results
       PaymentsResultsConsumer__BootstrapServers: kafka:9093
       PaymentsResultsConsumer__GroupId: orders-service
@@ -137,15 +124,12 @@
     environment:
       ASPNETCORE_ENVIRONMENT: Development
 
-      # DB
       ConnectionStrings__Default: Server=payments-db:5432;Database=postgres;User Id=postgres;Password=postgres;
 
-      # Consumer <- payments-requests
       PaymentsConsumer__Topic: payments-requests
       PaymentsConsumer__BootstrapServers: kafka:9093
       PaymentsConsumer__GroupId: payments-service
 
-      # Outbox publisher -> payments-results
       PaymentsProducer__Topic: payments-results
       PaymentsProducer__BootstrapServers: kafka:9093
     depends_on:
@@ -180,6 +164,12 @@
           "sources": [
             { "url": "http://nginx/orders/openapi/api.json", "title": "Orders API" },
             { "url": "http://nginx/payments/openapi/api.json", "title": "Payments API" }
+          ],
+          "servers": [
+            {
+              "url": "http://localhost:9000",
+              "description": "Development"
+            }
           ]
         }
 

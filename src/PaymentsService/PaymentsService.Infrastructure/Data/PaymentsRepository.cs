@@ -15,7 +15,6 @@ internal sealed class PaymentsRepository(AppDbContext dbContext) :
     IGetBalanceRepository,
     IProcessPaymentRepository
 {
-    // ----- AddAccount -----
     public Account GetOrCreate(int userId, DateTimeOffset now)
     {
         var existing = dbContext.Accounts.SingleOrDefault(a => a.UserId == userId);
@@ -34,7 +33,6 @@ internal sealed class PaymentsRepository(AppDbContext dbContext) :
         return account;
     }
 
-    // ----- TopUpAccount -----
     public Account? FindAccount(int userId)
     {
         var dto = dbContext.Accounts.SingleOrDefault(a => a.UserId == userId);
@@ -83,15 +81,11 @@ internal sealed class PaymentsRepository(AppDbContext dbContext) :
         // ledger: sum signed amounts
         var sumTopUp = dbContext.AccountTransactions
             .Where(t => t.AccountId == accountId && t.Type == "TOPUP")
-            .Select(t => t.Amount)
-            .DefaultIfEmpty(0)
-            .Sum();
+            .Sum(t => (decimal?)t.Amount) ?? 0;
 
         var sumDebit = dbContext.AccountTransactions
             .Where(t => t.AccountId == accountId && t.Type == "DEBIT")
-            .Select(t => t.Amount)
-            .DefaultIfEmpty(0)
-            .Sum();
+            .Sum(t => (decimal?)t.Amount) ?? 0;
 
         return sumTopUp - sumDebit;
     }
