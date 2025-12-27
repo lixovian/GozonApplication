@@ -1,8 +1,14 @@
+using Microsoft.OpenApi;
 using PaymentsService.Infrastructure;
 using PaymentsService.Presentation.Endpoints;
 using PaymentsService.UseCases;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddOpenApi("api", options =>
+{
+    options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_0;
+});
 
 builder.Services.AddSingleton(TimeProvider.System); 
 

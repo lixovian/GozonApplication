@@ -1,8 +1,14 @@
+using Microsoft.OpenApi;
 using OrdersService.Infrastructure;
 using OrdersService.Presentation.Endpoints;
 using OrdersService.UseCases;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddOpenApi("api", options =>
+{
+    options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_0;
+});
 
 builder.Services.AddSingleton(TimeProvider.System); 
 
