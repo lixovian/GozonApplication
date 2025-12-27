@@ -41,7 +41,6 @@ internal sealed class PaymentsRepository(AppDbContext dbContext) :
 
     public AccountTransaction AddTopUpTransaction(AccountTransaction transaction)
     {
-        // idempotency by Key
         var existing = dbContext.AccountTransactions.SingleOrDefault(t => t.Key == transaction.Key);
         if (existing is not null)
         {
@@ -67,7 +66,6 @@ internal sealed class PaymentsRepository(AppDbContext dbContext) :
         return transaction;
     }
 
-    // ----- GetBalance -----
     public Guid? FindAccountId(int userId)
     {
         return dbContext.Accounts

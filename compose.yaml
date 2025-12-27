@@ -46,9 +46,9 @@
   kafka:
     image: confluentinc/cp-kafka:7.6.0
     ports:
-      - "9092:9092" 
+      - "9092:9092"
     expose:
-      - "29092" 
+      - "29092"
       - "9093"
     environment:
       ALLOW_PLAINTEXT_LISTENER: "yes"
@@ -100,7 +100,6 @@
       - "6001:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-
       ConnectionStrings__DefaultConnection: Server=orders-db:5432;Database=postgres;User Id=postgres;Password=postgres;
 
       OrdersProducer__Topic: payments-requests
@@ -123,7 +122,6 @@
       - "6002:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-
       ConnectionStrings__Default: Server=payments-db:5432;Database=postgres;User Id=postgres;Password=postgres;
 
       PaymentsConsumer__Topic: payments-requests
@@ -138,40 +136,29 @@
       kafka-init:
         condition: service_completed_successfully
 
-  nginx:
-    image: nginx:latest
+  api-gateway:
+    build:
+      context: .
+      dockerfile: src/ApiGateway/ApiGateway.Host/Dockerfile
     ports:
-      - "9000:80"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
+      - "9000:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
     depends_on:
       orders-service:
         condition: service_started
       payments-service:
         condition: service_started
 
-  scalar:
-    image: scalarapi/api-reference:latest
-    depends_on:
-      nginx:
-        condition: service_started
+  web-interface:
+    build:
+      context: ./web-interface
     ports:
-      - "9010:8080"
-    environment:
-      API_REFERENCE_CONFIG: |
-        {
-          "theme": "purple",
-          "sources": [
-            { "url": "http://nginx/orders/openapi/api.json", "title": "Orders API" },
-            { "url": "http://nginx/payments/openapi/api.json", "title": "Payments API" }
-          ],
-          "servers": [
-            {
-              "url": "http://localhost:9000",
-              "description": "Development"
-            }
-          ]
-        }
+      - "3000:80"
+    depends_on:
+      api-gateway:
+        condition: service_started
+
 
 volumes:
   orders_db_data:

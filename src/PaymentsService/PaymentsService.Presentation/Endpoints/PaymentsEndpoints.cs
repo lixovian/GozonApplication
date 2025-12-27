@@ -10,7 +10,6 @@ namespace PaymentsService.Presentation.Endpoints;
 
 public static class PaymentsEndpoints
 {
-    // === WebApplication extension ===
     extension(WebApplication application)
     {
         public WebApplication MapPaymentsEndpoints()
@@ -25,7 +24,6 @@ public static class PaymentsEndpoints
         }
     }
 
-    // === RouteGroupBuilder extensions ===
     extension(RouteGroupBuilder builder)
     {
         private RouteGroupBuilder MapAddAccount()
