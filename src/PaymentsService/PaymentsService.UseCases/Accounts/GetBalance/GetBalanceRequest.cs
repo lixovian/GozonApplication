@@ -1,3 +1,7 @@
-﻿namespace PaymentsService.UseCases.Accounts.GetBalance;
+﻿using Microsoft.AspNetCore.Mvc;
 
-public sealed record GetBalanceRequest(int UserId);
+namespace PaymentsService.UseCases.Accounts.GetBalance;
+
+public sealed record GetBalanceRequest(
+    [property: FromQuery] int UserId
+    );

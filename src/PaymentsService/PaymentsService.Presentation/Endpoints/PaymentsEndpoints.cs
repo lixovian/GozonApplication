@@ -64,7 +64,7 @@ public static class PaymentsEndpoints
         {
             builder.MapGet(
                     pattern: "accounts/balance",
-                    ([FromQuery] int userId, IGetBalanceRequestHandler handler) =>
+                    (int userId, IGetBalanceRequestHandler handler) =>
                     {
                         var request = new GetBalanceRequest(userId);
                         var response = handler.Handle(request);

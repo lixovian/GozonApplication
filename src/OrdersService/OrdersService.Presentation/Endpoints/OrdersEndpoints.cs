@@ -38,7 +38,7 @@ public static class OrdersEndpoints
 
     private static RouteGroupBuilder MapListOrders(this RouteGroupBuilder group)
     {
-        group.MapGet("", ([FromQuery] int userId, IListOrdersRequestHandler handler) =>
+        group.MapGet("", (int userId, IListOrdersRequestHandler handler) =>
             {
                 var response = handler.Handle(userId);
                 return Results.Ok(response);
@@ -50,6 +50,7 @@ public static class OrdersEndpoints
 
         return group;
     }
+
 
     private static RouteGroupBuilder MapGetOrderStatus(this RouteGroupBuilder group)
     {
