@@ -1,31 +1,48 @@
 ﻿<script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { listOrders } from '../api/orders';
 import StatusPill from '../components/StatusPill.vue';
 import type { OrderListItem } from '../types/orders';
 
 const props = defineProps<{ userId: number; toast: any }>();
+
 const loading = ref(false);
 const items = ref<OrderListItem[]>([]);
 
 function cardTone(status: string) {
   const s = status.toLowerCase();
-  if (s.includes('paid') || s.includes('success')) return 'ok';
+  if (s.includes('paid') || s.includes('success') || s.includes('finished')) return 'ok';
   if (s.includes('fail') || s.includes('cancel') || s.includes('error')) return 'bad';
   return 'neutral';
 }
 
-async function load() {
+async function load(showToast = true) {
   loading.value = true;
   try {
     items.value = await listOrders(props.userId);
-    props.toast?.push('Список заказов обновлён', 'neutral', `Найдено: ${items.value.length}`);
+    if (showToast) {
+      props.toast?.push(
+          'Список заказов обновлен',
+          'neutral',
+          `Найдено: ${items.value.length}`
+      );
+    }
   } catch (e: any) {
-    props.toast?.push('Не удалось получить список заказов', 'bad', e?.body ?? e?.message);
+    if (showToast) {
+      props.toast?.push(
+          'Не удалось получить список заказов',
+          'bad',
+          e?.body ?? e?.message
+      );
+    }
   } finally {
     loading.value = false;
   }
 }
+
+onMounted(() => {
+  load(false);
+});
 </script>
 
 <template>
@@ -33,20 +50,22 @@ async function load() {
     <div class="row" style="justify-content: space-between;">
       <div>
         <h2 class="h1" style="margin-bottom: 6px;">Список заказов</h2>
-        <p class="sub">Горизонтальные карточки, цвет зависит от статуса.</p>
+        <p class="sub">Горизонтальные карточки с динамическим цветом</p>
       </div>
       <div class="row">
-        <button class="btn" :disabled="loading" @click="load">
+        <button class="btn" :disabled="loading" @click="load()">
           {{ loading ? 'Загрузка…' : 'Обновить' }}
         </button>
-        <span class="badge">userId: <span class="mono">{{ userId }}</span></span>
+        <span class="badge">
+          userId: <span class="mono">{{ userId }}</span>
+        </span>
       </div>
     </div>
 
     <hr />
 
-    <div v-if="items.length === 0" class="sub">
-      Пока пусто. Нажми “Обновить” или создай заказ.
+    <div v-if="!loading && items.length === 0" class="sub">
+      Пока пусто. Создай заказ или обнови список.
     </div>
 
     <div class="hlist" v-else>
@@ -67,10 +86,9 @@ async function load() {
 
         <div class="kv">
           <div class="k">Сумма</div>
-          <div class="v"><span class="mono">{{ o.amount }}</span></div>
-
-          <div class="k">Создан</div>
-          <div class="v">{{ o.createdAt ?? '—' }}</div>
+          <div class="v">
+            <span class="mono">{{ o.amount }}</span>
+          </div>
         </div>
       </div>
     </div>

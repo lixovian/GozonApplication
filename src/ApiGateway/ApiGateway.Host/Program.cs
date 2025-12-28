@@ -1,48 +1,43 @@
+using ApiGateway.Infrastructure;
 using ApiGateway.Presentation.Endpoints;
+using ApiGateway.UseCases;
+using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddCors(o =>
+builder.Services.AddCors(options =>
 {
-    o.AddPolicy("frontend", p => p
-        .WithOrigins("http://localhost:3000")
-        .AllowAnyHeader()
-        .AllowAnyMethod());
+    options.AddPolicy("frontend", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:3000")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
 });
 
-builder.Services.AddOpenApi("api");
-builder.Services.AddSwaggerGen();
+builder.Services.AddOpenApi("api", options =>
+{
+    options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_0;
+});
 
-builder.Services
-    .AddReverseProxy()
-    .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+builder.Services.AddSingleton(TimeProvider.System);
+
+builder.Services.AddOpenApi("api");
+
+builder.Services.AddInfrastructure();
+builder.Services.AddUseCases();
 
 var app = builder.Build();
 
-app.UseRouting();
+app.MapOpenApi();
 app.UseCors("frontend");
 
-app.MapMethods("{**path}", new[] { "OPTIONS" }, () => Results.Ok());
-
-app.MapReverseProxy()
-    .RequireCors("frontend");
-
-if (app.Environment.IsDevelopment())
+app.UseSwaggerUI(options =>
 {
-    app.MapOpenApi();
-    app.UseSwagger();
+    options.SwaggerEndpoint("/openapi/api.json", "API Gateway");
+});
 
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint("/orders/openapi/api.json", "Orders API");
-        options.SwaggerEndpoint("/payments/openapi/api.json", "Payments API");
-    });
-}
-
-app.UseHttpsRedirection();
-
-app.MapGatewayEndpoints();
-
-app.MapReverseProxy();
+app.MapApiGatewayEndpoints();
 
 app.Run();

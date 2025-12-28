@@ -19,7 +19,7 @@ async function add() {
 <template>
   <div>
     <button @click="load">Load Balance</button>
-    <button @click="add">+100</button>
+    <button @click="add">+0</button>
     <div v-if="balance !== null">Balance: {{ balance }}</div>
   </div>
 </template>

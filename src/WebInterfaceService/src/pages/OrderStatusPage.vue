@@ -9,7 +9,7 @@ const orderId = ref('');
 const status = ref<string | null>(null);
 const loading = ref(false);
 
-async function check() {
+async function check() {  
   if (!orderId.value.trim()) {
     props.toast?.push('Укажи номер заказа', 'bad');
     return;

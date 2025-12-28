@@ -29,6 +29,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiGateway.Host", "src\ApiG
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiGateway.Presentation", "src\ApiGateway\ApiGateway.Presentation\ApiGateway.Presentation.csproj", "{D3CC8CC1-D39B-4375-A889-7E862F05F288}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiGateway.Entities", "src\ApiGateway\ApiGateway.Entities\ApiGateway.Entities.csproj", "{0568ADA9-6B20-4B5F-BA00-401E644612FC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiGateway.UseCases", "src\ApiGateway\ApiGateway.UseCases\ApiGateway.UseCases.csproj", "{EADC4D9B-BE7C-4048-8084-4669268D97C6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiGateway.Infrastructure", "src\ApiGateway\ApiGateway.Infrastructure\ApiGateway.Infrastructure.csproj", "{4D28C981-8578-4B5E-9CF9-CCCD6EAC10A6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -83,5 +89,17 @@ Global
 		{D3CC8CC1-D39B-4375-A889-7E862F05F288}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D3CC8CC1-D39B-4375-A889-7E862F05F288}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D3CC8CC1-D39B-4375-A889-7E862F05F288}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0568ADA9-6B20-4B5F-BA00-401E644612FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0568ADA9-6B20-4B5F-BA00-401E644612FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0568ADA9-6B20-4B5F-BA00-401E644612FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0568ADA9-6B20-4B5F-BA00-401E644612FC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EADC4D9B-BE7C-4048-8084-4669268D97C6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EADC4D9B-BE7C-4048-8084-4669268D97C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EADC4D9B-BE7C-4048-8084-4669268D97C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EADC4D9B-BE7C-4048-8084-4669268D97C6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4D28C981-8578-4B5E-9CF9-CCCD6EAC10A6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4D28C981-8578-4B5E-9CF9-CCCD6EAC10A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4D28C981-8578-4B5E-9CF9-CCCD6EAC10A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4D28C981-8578-4B5E-9CF9-CCCD6EAC10A6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

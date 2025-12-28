@@ -27,5 +27,4 @@ defineExpose({ push });
 </template>
 
 <style scoped>
-/* стили уже в theme.css через классы toastWrap/toast/... */
 </style>

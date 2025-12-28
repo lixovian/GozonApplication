@@ -4,15 +4,15 @@ import { createOrder } from '../api/orders';
 
 const props = defineProps<{ userId: number; toast: any }>();
 
-const amount = ref<number>(100);
-const description = ref<string>('New Year order');
+const amount = ref<number>(0);
+const description = ref<string>('');
 const loading = ref(false);
 
 async function submit() {
   loading.value = true;
   try {
     const res = await createOrder(props.userId, amount.value, description.value);
-    props.toast?.push('Заказ создан', 'ok', `orderId: ${res.orderId}`);
+    props.toast?.push('Заказ создан', 'ok', `orderId: ${res.id}`);
   } catch (e: any) {
     props.toast?.push('Не удалось создать заказ', 'bad', e?.body ?? e?.message);
   } finally {
@@ -24,7 +24,7 @@ async function submit() {
 <template>
   <div class="card">
     <h2 class="h1">Создать заказ</h2>
-    <p class="sub">Создание заказа асинхронно запускает оплату.</p>
+    <p class="sub">Страница создания заказа</p>
 
     <hr />
 
@@ -41,7 +41,7 @@ async function submit() {
 
     <div class="row" style="margin-top: 14px;">
       <button class="btn btn-primary" :disabled="loading" @click="submit">
-        {{ loading ? 'Создаём…' : 'Создать заказ' }}
+        {{ loading ? 'Создаем…' : 'Создать заказ' }}
       </button>
       <span class="badge">userId: <span class="mono">{{ userId }}</span></span>
     </div>

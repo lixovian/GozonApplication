@@ -1,4 +1,6 @@
 ﻿<script setup lang="ts">
+import { ref, onMounted } from 'vue';
+
 export type TabKey =
     | 'home'
     | 'create'
@@ -19,11 +21,35 @@ const emit = defineEmits<{
 const tabs: { key: TabKey; label: string; hint: string }[] = [
   { key: 'home', label: 'Главная', hint: 'быстрый обзор' },
   { key: 'create', label: 'Создать заказ', hint: 'новый заказ' },
-  { key: 'list', label: 'Список заказов', hint: 'горизонтально' },
+  { key: 'list', label: 'Список заказов', hint: 'полный' },
   { key: 'balance', label: 'Баланс', hint: 'пополнение' },
   { key: 'status', label: 'Статус заказа', hint: 'по номеру' },
   { key: 'user', label: 'Пользователь', hint: 'userId' },
 ];
+
+type Theme = 'dark' | 'light';
+const theme = ref<Theme>('dark');
+
+function applyTheme(t: Theme) {
+  theme.value = t;
+
+  if (t === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
+
+  localStorage.setItem('theme', t);
+}
+
+function toggleTheme() {
+  applyTheme(theme.value === 'dark' ? 'light' : 'dark');
+}
+
+onMounted(() => {
+  const saved = localStorage.getItem('theme') as Theme | null;
+  applyTheme(saved ?? 'dark');
+});
 </script>
 
 <template>
@@ -45,7 +71,16 @@ const tabs: { key: TabKey; label: string; hint: string }[] = [
           @click="emit('update:modelValue', t.key)"
       >
         <span class="tabLabel">{{ t.label }}</span>
-        <span class="tabHint">{{ t.hint }}</span>
+      </button>
+
+      <!-- Theme toggle -->
+      <button
+          class="themeBtn"
+          @click="toggleTheme"
+          title="Переключить тему"
+      >
+        <span v-if="theme === 'dark'">🌙</span>
+        <span v-else>☀️</span>
       </button>
     </div>
   </div>
@@ -72,6 +107,7 @@ const tabs: { key: TabKey; label: string; hint: string }[] = [
   gap: 12px;
   min-width: 240px;
 }
+
 .logo {
   width: 40px;
   height: 40px;
@@ -82,14 +118,23 @@ const tabs: { key: TabKey; label: string; hint: string }[] = [
   border: 1px solid rgba(255,255,255,0.10);
   box-shadow: 0 12px 30px rgba(0,0,0,0.25);
 }
-.title { font-size: 14px; letter-spacing: 0.2px; }
-.subtitle { font-size: 12px; color: rgba(255,255,255,0.62); }
+
+.title {
+  font-size: 14px;
+  letter-spacing: 0.2px;
+}
+
+.subtitle {
+  font-size: 12px;
+  color: rgba(255,255,255,0.62);
+}
 
 .tabs {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
   justify-content: flex-end;
+  align-items: center;
 }
 
 .tab {
@@ -111,13 +156,41 @@ const tabs: { key: TabKey; label: string; hint: string }[] = [
   border-color: rgba(255,255,255,0.16);
 }
 
-.tab:active { transform: translateY(1px); }
+.tab:active {
+  transform: translateY(1px);
+}
 
 .tab.active {
   border-color: rgba(124,92,255,0.55);
-  background: linear-gradient(180deg, rgba(124,92,255,0.30), rgba(124,92,255,0.10));
+  background: linear-gradient(
+      180deg,
+      rgba(124,92,255,0.30),
+      rgba(124,92,255,0.10)
+  );
 }
 
-.tabLabel { font-size: 13px; }
-.tabHint { font-size: 11px; color: rgba(255,255,255,0.55); }
+.tabLabel {
+  font-size: 13px;
+}
+
+.themeBtn {
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.03);
+  color: var(--text);
+  border-radius: 14px;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.08s ease;
+}
+
+.themeBtn:hover {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.18);
+}
+
+.themeBtn:active {
+  transform: translateY(1px);
+}
 </style>

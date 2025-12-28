@@ -100,6 +100,7 @@
       - "6001:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://0.0.0.0:8080
       ConnectionStrings__DefaultConnection: Server=orders-db:5432;Database=postgres;User Id=postgres;Password=postgres;
 
       OrdersProducer__Topic: payments-requests
@@ -122,6 +123,7 @@
       - "6002:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://0.0.0.0:8080
       ConnectionStrings__Default: Server=payments-db:5432;Database=postgres;User Id=postgres;Password=postgres;
 
       PaymentsConsumer__Topic: payments-requests
@@ -144,6 +146,10 @@
       - "9000:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://0.0.0.0:8080
+
+      OrdersApi__BaseUrl: http://orders-service:8080
+      PaymentsApi__BaseUrl: http://payments-service:8080
     depends_on:
       orders-service:
         condition: service_started
