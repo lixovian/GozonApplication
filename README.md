@@ -3,12 +3,21 @@
 
 ## Запуск и подключение
 Для запуска используйте команду
-```bash
+```shell
 docker compose up -d --build
+```
+Я искренне надеюсь, что в этот раз миграции подключились корректно и не нужно запускать их вручную перед compose, 
+но если все-таки я ошибся и надо, то вот команды
+```shell
+dotnet ef migrations add Initial --project src/OrdersService/OrdersService.Infrastructure --startup-project src/OrdersService/OrdersService.Host
+```
+
+```shell
+dotnet ef migrations add Initial --project src/PaymentsService/PaymentsService.Infrastructure --startup-project src/PaymentsService/PaymentsService.Host
 ```
 
 Чтобы просмотреть сваггер и UI используйте следующие порты
-```bash
+```shell
 http://localhost:6001 - Order Service
 http://localhost:6002 - Payment Service
 http://localhost:9000 - API Gateway
